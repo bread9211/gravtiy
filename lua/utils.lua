@@ -2,11 +2,10 @@ local window = js.global
 local document = window.document
 local screen = document:getElementById("screen")
 local two = window.Two
-
 local dat = window.dat
 
 local function new(object, ...)
-    return js.new(object, table.unpack(...))
+    return js.new(object, table.unpack({...}))
 end
 
 local function bind(event, f)
@@ -14,37 +13,41 @@ local function bind(event, f)
     print("binded to " .. event)
 end
 
-local function object(t)
-    local o = new(window.Object)
+local function object(table)
+	local o = js.new(window.Object)
 
-    for i, v in ipairs(t) do
-        o[i] = v
+    for key, value in pairs(table) do
+        if(type(value) == "table") then
+            o[key] = object(value)
+        else
+			assert(type(key) == "string" or js.typeof(key) == "symbol", "JavaScript only has string and symbol keys")
+            o[key] = value
+        end
     end
 
-    return o
+	return o
 end
 
 local function controls(t)
     local self = {}
+    self.table = t
+    self.dat = new(dat.GUI, {width = 300})
 
-    self.dat = new(dat.GUI, t)
-    self.dat:show()
-
-    for i, _ in ipairs(t) do
-        self.dat:add(t, i)
+    for i, _ in pairs(t) do
+        self.dat:add(self.table, i, 1)
     end
 
     return self
 end
 
 return {
-    window = window,
-    document = document,
-    screen = screen,
+    window = window,print("utils"),
+    document = document,print("utils"),
+    screen = screen,print("utils"),
     two = new(two, object({
         fullscreen = true,
         domElement = screen,
-        autoStart = true,
+        -- autoStart = true,
     })),
 
     bind = bind,
